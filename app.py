@@ -14,21 +14,19 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-# Pull the secret key from the environment
-# Change this line:
+
 app.secret_key = "skill_swap_permanent_key_2026"
 
-# Also, add this to ensure cookies are handled correctly by the browser
+
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax',
     PERMANENT_SESSION_LIFETIME=timedelta(days=7)
 )
 
-# Pull the Groq key from the environment
 client = Groq(api_key=os.getenv('GROQ_API_KEY'))
 
-# Updated Email Helper using Environment Variables
+
 def send_verification_email(user_email, token):
     sender = os.getenv('EMAIL_USER')
     password = os.getenv('EMAIL_PASS')
@@ -36,7 +34,7 @@ def send_verification_email(user_email, token):
     msg = EmailMessage()
     msg['From'] = f"SKILL SWAP <{sender}>"
     msg['To'] = user_email
-    # ... (rest of your email logic stays the same)
+ 
     
     with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
         smtp.login(sender, password)
@@ -50,7 +48,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_FILE = os.path.join(BASE_DIR, 'database.json')
 
 def load_db():
-    # Start with the absolute default state
+    
     default_users = {
         "demo@test.com": {
             "email": "demo@test.com", "name": "Design Guru", 
@@ -69,8 +67,8 @@ def load_db():
         "reward": 150,
         "status": "Open",
         "progress": 0,
-        "posted_by": "system",   # Added this
-        "accepted_by": None      # Added this
+        "posted_by": "system",  
+        "accepted_by": None      
     },
     {
         "id": "ai-sys-404",
@@ -80,8 +78,8 @@ def load_db():
         "reward": 300,
         "status": "Open",
         "progress": 0,
-        "posted_by": "system",   # Added this
-        "accepted_by": None      # Added this
+        "posted_by": "system",   
+        "accepted_by": None     
     }
 ]
     
@@ -92,7 +90,6 @@ def load_db():
                 users = data.get("users", default_users)
                 requests = data.get("requests", [])
                 notifications = data.get("notifications", [])
-                # Ensure bounties are loaded or use defaults
                 bounties = data.get("bounties", default_bounties)
                 return users, requests, notifications, bounties
             except:
@@ -120,7 +117,6 @@ users_db, swap_requests, notifications_db, bounties_db = load_db()
 
 # --- HELPERS ---
 
-# In get_current_user() helper:
 def get_current_user():
     email = session.get('email')  # Changed from 'user_email'
     return users_db.get(email) if email else None
@@ -135,21 +131,18 @@ def login():
     if user and user['password'] == password:
         session.clear()
         session.permanent = True
-        session['email'] = email # Use 'email' to match auth route
+        session['email'] = email 
         session.modified = True 
         return jsonify({"status": "success", "redirect": "/dashboard"})
     return jsonify({"status": "error", "message": "Invalid Credentials"}), 401
 
 def send_verification_email(user_email, token):
     msg = EmailMessage()
-    
-    # 1. CHANGE SENDER NAME
-    # Format: "Name <email@address.com>"
+
     msg['From'] = "SKILL SWAP <prajaktav416@gmail.com>"
     msg['To'] = user_email
     msg['Subject'] = '🚀 Welcome to Skill Swap - Verify Your Identity'
 
-    # 2. IMPROVED WELCOMING MESSAGE (HTML Version)
     html_content = f"""
     <html>
         <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333;">
@@ -170,8 +163,8 @@ def send_verification_email(user_email, token):
     </html>
     """
     
-    msg.set_content(f"Welcome to Skill Swap! Your verification code is: {token}") # Plain text fallback
-    msg.add_alternative(html_content, subtype='html') # High-quality HTML version
+    msg.set_content(f"Welcome to Skill Swap! Your verification code is: {token}") 
+    msg.add_alternative(html_content, subtype='html') 
 
     try:
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
@@ -195,7 +188,7 @@ def add_notification(email, message, type="info"):
         "timestamp": datetime.now().strftime("%H:%M"),
         "read": False
     })
-    # MUST pass the globals to save_db
+
     save_db()
 
 def ask_ai(prompt):
@@ -241,14 +234,14 @@ def auth():
             }
             save_db()
             session.permanent = True
-            session['email'] = email # CONSISTENT KEY
+            session['email'] = email
             return jsonify({"status": "pending_verification", "email": email, "redirect": "/verify_page"})
             
-    else: # Login logic
+    else:
         user = users_db.get(email)
         if user and user['password'] == password:
             session.permanent = True
-            session['email'] = email # CONSISTENT KEY
+            session['email'] = email
             target = "/dashboard" if user.get('email_verified') else "/onboarding"
             return jsonify({"status": "success", "redirect": target})
             
@@ -284,9 +277,9 @@ def dashboard():
     if not user.get('email_verified'): 
         return redirect(url_for('verify_page', email=user['email']))
     
-    # Sort bounties to show the 3 most recent 'Open' ones on the dashboard
+   
     recent_bounties = [b for b in bounties_db if b.get('status') == 'Open']
-    recent_bounties = recent_bounties[-3:] # Get the last 3 added
+    recent_bounties = recent_bounties[-3:] 
     
     greeting = f"Ready to master something new, {user['name']}?"
     
@@ -309,21 +302,17 @@ def connections():
     if not user: 
         return redirect(url_for('auth_page'))
     
-    # 1. Filter swaps from the global swap_requests list
-    # We only want swaps where the current user is either the sender or receiver
+  
     active = [
         s for s in swap_requests 
         if s.get('status') == 'matched' and (s.get('from') == user['email'] or s.get('to') == user['email'])
     ]
-    
-    # 2. Get history from user dict
+   
     history = user.get('history', [])
-    
-    # 3. Calculate dynamic stats for the cards
-    # Yield = total credits earned (positive amounts in history)
+
     yield_val = sum(h.get('amount', 0) for h in history if h.get('amount', 0) > 0)
     
-    # Expenditure = total credits spent (negative amounts in history)
+
     spent_val = abs(sum(h.get('amount', 0) for h in history if h.get('amount', 0) < 0))
     
     return render_template('connections.html', 
@@ -357,14 +346,14 @@ def add_goal():
     user = get_current_user()
     if not user: return jsonify({"status": "error"}), 401
     
-    goal = request.form.get('goal') # This comes from the profile page input
+    goal = request.form.get('goal') 
     if goal:
         if 'goals' not in user:
             user['goals'] = []
             
         if goal not in user['goals']:
             user['goals'].append(goal)
-            save_db() # Saves to database.json
+            save_db()
             return jsonify({"status": "success"})
             
     return jsonify({"status": "error", "message": "Invalid goal"})
@@ -377,7 +366,7 @@ def delete_goal():
     goal_to_remove = request.form.get('goal')
     if 'goals' in user and goal_to_remove in user['goals']:
         user['goals'].remove(goal_to_remove)
-        save_db() # Syncs to database.json
+        save_db() 
         return jsonify({"status": "success"})
     return jsonify({"status": "error", "message": "Goal not found"})
 
@@ -433,25 +422,22 @@ def api_finalize_session(room_id):
     if not current_user_email:
         return jsonify({"status": "error", "message": "Unauthorized"}), 401
 
-    # 1. Find the swap in the global list
+
     target_swap = next((s for s in swap_requests if s.get('room_id') == room_id and s.get('status') == 'matched'), None)
     
     if not target_swap:
         return jsonify({"status": "error", "message": "Active session not found"}), 404
 
-    # 2. Determine Roles
-    # Logic: 'from' initiated, 'to' accepted. 
-    # Usually, the person who initiates ('from') is paying for the skill.
+
     learner_email = target_swap['from']
     teacher_email = target_swap['to']
-    cost = float(target_swap.get('cost', 5.0)) # Use 5.0 as default to match your request logic
+    cost = float(target_swap.get('cost', 5.0)) 
 
-    # 3. Transfer Credits
     if learner_email in users_db and teacher_email in users_db:
         users_db[learner_email]['credits'] -= cost
         users_db[teacher_email]['credits'] += cost
         
-        # 4. Update History Entry
+
         history_entry = {
             "date": datetime.now().strftime("%Y-%m-%d"),
             "topic": target_swap.get('message', 'Skill Exchange'),
@@ -459,27 +445,26 @@ def api_finalize_session(room_id):
             "rating": int(rating)
         }
 
-        # Add to Learner's history (Negative amount)
+
         learner_history = history_entry.copy()
         learner_history["partner"] = users_db[teacher_email]['name']
         learner_history["amount"] = -cost
         users_db[learner_email].setdefault('history', []).insert(0, learner_history)
 
-        # Add to Teacher's history (Positive amount)
         teacher_history = history_entry.copy()
         teacher_history["partner"] = users_db[learner_email]['name']
         teacher_history["amount"] = cost
         users_db[teacher_email].setdefault('history', []).insert(0, teacher_history)
 
-        # 5. Handle Rating
+
         users_db[teacher_email].setdefault('ratings', []).append(int(rating))
         r_list = users_db[teacher_email]['ratings']
         users_db[teacher_email]['avg_rating'] = round(sum(r_list) / len(r_list), 1)
 
-    # 6. Mark swap as completed and remove from active list
+
     target_swap['status'] = 'completed'
     
-    # 7. Persist to database.json
+
     save_db()
     
     return jsonify({
@@ -493,19 +478,18 @@ def workspace(project_id):
     if not user:
         return redirect(url_for('auth_page'))
     
-    # 1. Check if this is a Bounty (System or Human)
+
     project = next((b for b in bounties_db if b['id'] == project_id), None)
     mode = 'bounty'
 
-    # 2. If not a bounty, check the user's manual active_projects
+  
     if not project:
         project = next((p for p in user.get('active_projects', []) if p['id'] == project_id), None)
         mode = 'solo'
 
-    # 3. Security Check: Does the user have access?
-    # Either they are the one who accepted the bounty, or they created the manual project.
+
     if project:
-        # If it's a bounty, ensure the current user is the one who accepted it
+
         if mode == 'bounty' and project.get('accepted_by') != user['email']:
              return "Access Denied: You have not accepted this mission.", 403
              
@@ -722,9 +706,6 @@ def leaderboard_data():
     ranked = sorted(all_users, key=lambda x: (x.get('streak', 0), x.get('credits', 0)), reverse=True)
     return jsonify(ranked[:10])
 
-# --- CONSOLIDATED PROJECT & WORKSPACE LOGIC ---
-
-# --- CLEANED PROJECT & WORKSPACE LOGIC ---
 
 
 @app.route('/get_project/<id>')
@@ -775,7 +756,7 @@ def update_project(id):
         save_db()
         return jsonify({"status": "success", "message": message})
 
-    # 2. Try Manual Project Update (No rewards for solo projects)
+
     manual = next((p for p in user.get('active_projects', []) if p['id'] == id), None)
     if manual:
         manual['progress'] = new_progress
@@ -793,7 +774,7 @@ def delete_project(id):
     # 1. Check if it's a Bounty the user has accepted
     bounty = next((b for b in bounties_db if b['id'] == id), None)
     if bounty and bounty.get('accepted_by') == user['email']:
-        # Reset the bounty so it returns to the Marketplace
+       
         bounty['status'] = 'Open'
         bounty['accepted_by'] = None
         bounty['progress'] = 0
@@ -929,13 +910,11 @@ def accept_bounty():
     if bounty.get('status') != 'Open':
         return jsonify({"status": "error", "message": "Mission already claimed"}), 400
 
-    # 4. Update Bounty State directly in the global list
     bounty['status'] = 'Active'
     bounty['accepted_by'] = user_email
     bounty['progress'] = 0
     bounty['accepted_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # 5. Save the state to database.json
     if save_db():
         print(f"+++ [SUCCESS]: {bounty_id} assigned to {user_email}")
         return jsonify({
@@ -954,7 +933,7 @@ def finalize_mission():
 
     project_id = request.form.get('project_id')
     
-    # 1. BOUNTY VERIFICATION
+
     bounty = next((b for b in bounties_db if b['id'] == project_id), None)
     
     if bounty and bounty.get('accepted_by') == user['email']:
@@ -963,7 +942,7 @@ def finalize_mission():
 
         reward = int(bounty.get('reward', 0))
 
-        # Human Bounty Credit Transfer Logic
+
         if bounty.get('type') == 'human':
             creator = users_db.get(bounty.get('creator_email'))
             if creator:
@@ -971,12 +950,11 @@ def finalize_mission():
                     return jsonify({"status": "error", "message": "Creator has insufficient credits"}), 400
                 creator['credits'] -= reward
         
-        # System/AI Bounties just add credits to user
         user['credits'] = user.get('credits', 0) + reward
         bounty['status'] = 'Completed'
         bounty['progress'] = 100
         
-        # Log to History
+
         user.setdefault('history', []).insert(0, {
             "date": str(date.today()),
             "topic": f"Bounty: {bounty['title']}",
@@ -987,8 +965,6 @@ def finalize_mission():
         save_db()
         return jsonify({"status": "success", "message": f"Operation Cleared. +{reward} Credits."})
 
-    # 2. PEER-TO-PEER SWAP LOGIC
-    # Handles the 5-credit transfer for regular skill swaps
     match = next((r for r in swap_requests if r.get('room_id') == project_id), None)
     if match:
         learner = users_db.get(match['from'])
@@ -1004,7 +980,6 @@ def finalize_mission():
     return jsonify({"status": "error", "message": "Invalid Session"}), 404
 
 if __name__ == '__main__':
-    # Ensure the DB file exists before running
     if not os.path.exists(DB_FILE):
         save_db()
     app.run(host='127.0.0.1', port=5000, debug=True)
