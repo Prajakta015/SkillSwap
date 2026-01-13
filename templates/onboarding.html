@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Expertise | SkillSwap</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --accent: #7d2ae8; --secondary: #00d2ff; --bg: #0f172a; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg);
+            height: 100vh; display: flex; align-items: center; justify-content: center;
+            color: white; overflow: hidden;
+        }
+
+        .onboard-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 50px;
+            border-radius: 40px;
+            width: 100%; max-width: 600px;
+            text-align: center;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.5);
+            animation: slideUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .ai-status {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(0, 210, 255, 0.1);
+            padding: 8px 16px; border-radius: 50px;
+            color: var(--secondary); font-size: 12px; font-weight: 800;
+            margin-bottom: 24px; text-transform: uppercase;
+        }
+
+        .pulse { width: 8px; height: 8px; background: var(--secondary); border-radius: 50%; animation: pulse 2s infinite; }
+
+        h1 { font-size: 32px; font-weight: 800; margin-bottom: 15px; letter-spacing: -1px; }
+        #question-text { font-size: 18px; line-height: 1.6; color: #cbd5e1; margin-bottom: 30px; min-height: 60px; }
+
+        textarea {
+            width: 100%; height: 120px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px; color: white; padding: 20px;
+            font-family: inherit; font-size: 16px; transition: 0.3s;
+            resize: none; outline: none; margin-bottom: 20px;
+        }
+        textarea:focus { border-color: var(--accent); background: rgba(255, 255, 255, 0.08); }
+
+        .btn-verify {
+            background: white; color: black; border: none;
+            padding: 16px 40px; border-radius: 50px; font-weight: 800;
+            cursor: pointer; transition: 0.3s;
+        }
+        .btn-verify:hover { transform: scale(1.05); box-shadow: 0 10px 30px rgba(255,255,255,0.1); }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
+    </style>
+</head>
+<body>
+
+    <div class="onboard-card">
+        <div class="ai-status">
+            <div class="pulse"></div> AI Technical Interviewer
+        </div>
+        <h1 id="main-title">Prove your expertise</h1>
+        <p id="question-text">Generating a unique challenge for you...</p>
+
+        <div id="input-area" style="display: none; margin-top: 20px;">
+            <textarea id="user-answer" placeholder="Type your answer here..."></textarea>
+            <br>
+            <button class="btn-verify" id="v-btn" onclick="submitAnswer()">Verify & Earn 10 Credits</button>
+        </div>
+
+        <div id="skip-area" style="margin-top: 25px;">
+            <span onclick="skipChallenge()" id="skip-text" style="color: #94a3b8; cursor: pointer; font-size: 13px; text-decoration: underline;">
+                I'll do this later, take me to Dashboard
+            </span>
+        </div>
+    </div>
+
+    <script>
+        window.onload = async () => {
+            try {
+                // We add a slight timeout handling here
+                const res = await fetch('/get_verification_challenge', { method: 'POST' });
+                const data = await res.json();
+                
+                if(data.status === 'success') {
+                    document.getElementById('question-text').innerText = data.question;
+                    document.getElementById('input-area').style.display = 'block';
+                } else {
+                    // Fail gracefully
+                    handleAIBusy();
+                }
+            } catch (e) {
+                handleAIBusy();
+            }
+        };
+
+        function handleAIBusy() {
+            document.getElementById('main-title').innerText = "Ready to start?";
+            document.getElementById('question-text').innerText = "AI is warming up, but you can jump straight into the studio and verify your skills later!";
+            document.getElementById('skip-text').innerText = "Enter Studio Now →";
+            document.getElementById('skip-text').style.color = "var(--secondary)";
+            document.getElementById('skip-text').style.fontSize = "16px";
+            document.getElementById('skip-text').style.fontWeight = "800";
+        }
+
+        async function submitAnswer() {
+            const answer = document.getElementById('user-answer').value;
+            const btn = document.getElementById('v-btn');
+            
+            if(!answer) return alert("Please provide an answer!");
+
+            btn.innerText = "Analyzing...";
+            btn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('answer', answer);
+
+            try {
+                const res = await fetch('/verify_answer', { method: 'POST', body: formData });
+                const data = await res.json();
+
+                if(data.status === 'success') {
+                    alert("Success! Expertise verified. +10 Credits awarded.");
+                    window.location.href = "/dashboard";
+                } else {
+                    alert(data.message);
+                    btn.innerText = "Try Again";
+                    btn.disabled = false;
+                }
+            } catch (e) {
+                alert("Connection lost. Take the shortcut to the dashboard!");
+                btn.disabled = false;
+            }
+        }
+
+        function skipChallenge() {
+            window.location.href = "/dashboard";
+        }
+    </script>
+</body>
+</html>

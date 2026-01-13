@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Studio | Global Rankings</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --bg: #020617;
+            --surface: #0f172a;
+            --border: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --gold: #f59e0b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--bg); color: var(--text-main); display: flex;
+        }
+
+        nav { width: 80px; height: 100vh; background: var(--surface); border-right: 1px solid var(--border); position: fixed; }
+        
+        
+        .container { margin-left: 80px; padding: 60px; width: 100%; max-width: 1000px; margin-inline: auto; }
+
+        /* Leaderboard Card */
+        .rank-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 20px; padding: 20px 30px; margin-bottom: 12px;
+            display: grid; grid-template-columns: 50px 1fr 120px 120px;
+            align-items: center; transition: 0.3s;
+        }
+        .rank-card:hover { border-color: var(--primary); transform: scale(1.01); }
+        
+        .rank-number { font-weight: 800; font-size: 20px; color: var(--text-dim); }
+        .top-3 .rank-number { color: var(--gold); font-size: 28px; }
+
+        .user-info { display: flex; align-items: center; gap: 15px; }
+        .avatar-circle { 
+            width: 40px; height: 40px; border-radius: 50%; 
+            background: var(--primary); display: flex; 
+            align-items: center; justify-content: center; font-weight: 800;
+        }
+
+        .stat-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; font-weight: 700; }
+        .stat-value { font-weight: 700; font-size: 18px; }
+
+        .section-header { margin-bottom: 40px; text-align: center; }
+        .section-header h1 { font-size: 42px; font-weight: 800; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <nav style="display: flex; flex-direction: column; align-items: center; padding-top: 20px;">
+    <a href="/dashboard" style="text-decoration: none; font-size: 24px;">DB</a>
+</nav>
+
+    <div class="container">
+        <div class="section-header">
+            <p style="color: var(--primary); font-weight: 800; letter-spacing: 2px;">GLOBAL HIERARCHY</p>
+            <h1>Hall of Fame</h1>
+        </div>
+
+        <div id="leaderboard-list">
+            </div>
+    </div>
+
+    <script>
+        async function loadLeaderboard() {
+    try {
+        const response = await fetch('/leaderboard_data');
+        const users = await response.json();
+        const container = document.getElementById('leaderboard-list');
+
+        container.innerHTML = users.map((user, index) => {
+            // Match the key 'name' from your Python users_db
+            const displayName = user.name || "Anonymous";
+            const initial = displayName.charAt(0).toUpperCase();
+
+            return `
+                <div class="rank-card ${index < 3 ? 'top-3' : ''}">
+                    <div class="rank-number">#${index + 1}</div>
+                    <div class="user-info">
+                        <div class="avatar-circle">${initial}</div>
+                        <div>
+                            <div style="font-weight: 700;">${displayName}</div>
+                            <div style="font-size: 12px; color: var(--text-dim);">${user.skill || 'Specialist'}</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="stat-label">Streak</div>
+                        <div class="stat-value">🔥 ${user.streak || 0}</div>
+                    </div>
+                    <div>
+                        <div class="stat-label">Credits</div>
+                        <div class="stat-value">${(user.credits || 0).toFixed(0)}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch (err) {
+        console.error("Failed to load rankings:", err);
+    }
+}
+
+loadLeaderboard();
+
+    </script>
+</body>
+</html>

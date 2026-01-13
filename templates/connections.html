@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Studio | Connection Intelligence</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1; --secondary: #0ea5e9; --bg: #020617;
+            --surface: #0f172a; --border: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc; --text-dim: #94a3b8; --accent: #10b981;
+            --warning: #f59e0b; --danger: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--bg); color: var(--text-main);
+            display: flex; min-height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        nav {
+            width: 80px; height: 100vh; background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; align-items: center;
+            padding: 30px 0; position: fixed; z-index: 100;
+        }
+
+        .nav-link {
+            width: 44px; height: 44px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 25px; transition: 0.2s;
+            color: var(--text-dim); text-decoration: none; border: 1px solid transparent;
+            font-size: 16px; font-weight: 700;
+        }
+
+        .nav-link:hover, .nav-link.active { 
+            background: rgba(99, 102, 241, 0.1); 
+            color: var(--primary); border-color: rgba(99, 102, 241, 0.2);
+        }
+
+        /* Layout */
+        .workspace-container { flex: 1; margin-left: 80px; padding: 40px 60px; max-width: 1400px; }
+        
+        /* Stats */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
+        .stat-card { background: var(--surface); border: 1px solid var(--border); padding: 24px; border-radius: 16px; }
+        .stat-card label { display: block; color: var(--text-dim); font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 12px; }
+        .stat-card .value { font-size: 28px; font-weight: 700; }
+
+        /* Tabs */
+        .tab-nav { display: flex; gap: 32px; border-bottom: 1px solid var(--border); margin-bottom: 30px; }
+        .tab-btn {
+            background: none; border: none; color: var(--text-dim);
+            padding: 12px 0; font-size: 14px; font-weight: 600;
+            cursor: pointer; position: relative;
+        }
+        .tab-btn.active { color: var(--primary); }
+        .tab-btn.active::after {
+            content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background: var(--primary);
+        }
+
+        .view-container { display: none; }
+        .view-container.active { display: block; }
+
+        /* Cards & Tables */
+        .section-label { font-size: 12px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; margin-bottom: 20px; display: block; }
+        .card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 16px; padding: 24px; margin-bottom: 16px;
+            display: grid; grid-template-columns: 1fr auto; align-items: center;
+        }
+        .card.live { border-left: 4px solid var(--accent); background: linear-gradient(90deg, rgba(16, 185, 129, 0.03) 0%, transparent 100%); }
+
+        .history-table { width: 100%; border-collapse: collapse; }
+        .history-table th { text-align: left; padding: 15px; color: var(--text-dim); font-size: 12px; border-bottom: 1px solid var(--border); }
+        .history-table td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 14px; }
+
+        .btn {
+            padding: 10px 24px; border-radius: 10px; font-size: 13px;
+            font-weight: 700; cursor: pointer; transition: 0.2s; border: 1px solid transparent;
+            text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
+        }
+
+        /* Sidebar-style Square Buttons (Like the ones in your photo) */
+.btn-glass-square {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    transition: 0.2s;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+/* Sidebar-style Wide Buttons (For text like "Accept" or "View") */
+.btn-glass-wide {
+    padding: 10px 20px;
+    height: 44px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    transition: 0.2s;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    text-transform: uppercase;
+}
+
+/* The Hover Effect from your photo (Blue glow/Active state) */
+.btn-glass-square:hover, .btn-glass-wide:hover, .btn-active-glow {
+    background: rgba(99, 102, 241, 0.1); 
+    color: var(--primary); 
+    border-color: rgba(99, 102, 241, 0.3);
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.1);
+}
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+
+        /* Toast */
+        #toast-container { position: fixed; top: 40px; right: 40px; z-index: 9999; }
+        .toast {
+            background: var(--surface); border: 1px solid var(--primary); padding: 16px 24px; border-radius: 12px;
+            display: flex; align-items: center; gap: 15px; transform: translateX(120%); transition: 0.5s; margin-bottom: 10px;
+        }
+        .toast.show { transform: translateX(0); }
+
+        /* Sidebar Navigation Links */
+.nav-link {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 25px;
+    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: var(--text-dim);
+    text-decoration: none;
+    /* Glass border from your photo */
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+/* The "DB" Style: Active State with Gradient and Glow */
+.nav-link:hover, .nav-link.active { 
+    background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%); 
+    color: white; 
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+    transform: translateY(-1px);
+}
+
+    </style>
+</head>
+<body>
+
+    <div id="toast-container"></div>
+
+    
+        <nav>
+    <a href="/dashboard" class="nav-link {{ 'active' if request.path == '/dashboard' }}">DS</a>
+    <a href="/connections" class="nav-link {{ 'active' if request.path == '/connections' }}">CH</a>
+    <a href="/my_projects" class="nav-link {{ 'active' if request.path == '/my_projects' }}">MP</a>
+    <a href="/profile" class="nav-link {{ 'active' if request.path == '/profile' }}">PR</a>
+</nav>
+    
+    <div class="workspace-container">
+        <header style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 48px;">
+            <div>
+                <p style="color: var(--primary); font-weight: 700; font-size: 12px; letter-spacing: 0.1em; margin-bottom: 8px;">NETWORK STATUS: ACTIVE</p>
+                <h1 style="font-size: 32px;">Connection Intelligence</h1>
+            </div>
+            <p id="live-clock" style="font-family: monospace; font-size: 20px; color: var(--text-dim);">00:00:00</p>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <label>Available Credits</label>
+                <div class="value" id="balance-display">0.00</div>
+            </div>
+            <div class="stat-card">
+                <label>Yield (Gained)</label>
+                <div class="value" id="yield-display" style="color: var(--accent);">+0.00</div>
+            </div>
+            <div class="stat-card">
+                <label>Expenditure (Spent)</label>
+                <div class="value" id="spent-display" style="color: var(--danger);">-0.00</div>
+            </div>
+        </div>
+
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchView('active', this)">Scheduled & Live</button>
+            <button class="tab-btn" onclick="switchView('history', this)">Exchange History</button>
+        </div>
+
+        <div id="view-active" class="view-container active">
+            <span class="section-label">Live Channels</span>
+            <div id="live-list"></div>
+
+            <span class="section-label" style="margin-top: 40px;">Scheduled Exchanges</span>
+            <div id="scheduled-list"></div>
+        </div>
+
+        <div id="view-history" class="view-container">
+            <span class="section-label">Transaction Ledger</span>
+            <div class="card" style="display: block; padding: 0;">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Partner</th>
+                            <th>Topic</th>
+                            <th>Status</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-list"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- OG DATA FROM BACKEND ---
+        let userState = {
+            balance: Number({{ user.impact|default(0)|tojson }}),
+            yield: Number({{ user.yield|default(0)|tojson }}),
+            spent: Number({{ user.expenditure|default(0)|tojson }})
+        };
+
+        let activeSessions = {{ active_swaps|default([])|tojson|safe }};
+        let scheduledSessions = {{ scheduled_swaps|default([])|tojson|safe }};
+        let history = {{ history_data|default([])|tojson|safe }};
+
+        // --- CORE FUNCTIONS ---
+
+        function switchView(viewId, btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-' + viewId).classList.add('active');
+        }
+
+        function renderAll() {
+            renderLive();
+            renderScheduled();
+            renderHistory();
+            updateStats();
+        }
+
+        function updateStats() {
+            document.getElementById('balance-display').innerText = userState.balance.toFixed(2);
+            document.getElementById('yield-display').innerText = "+" + userState.yield.toFixed(2);
+            document.getElementById('spent-display').innerText = "-" + userState.spent.toFixed(2);
+        }
+
+        function renderLive() {
+            const container = document.getElementById('live-list');
+            if (activeSessions.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-dim);">No active sessions found.</p>';
+                return;
+            }
+            container.innerHTML = activeSessions.map(s => {
+                const partner = s.from === "{{ user.email }}" ? s.to : s.from;
+                return `
+                <div class="card live">
+                    <div>
+                        <span style="color: var(--accent); font-size: 10px; font-weight: 800;">● LIVE CONNECTION</span>
+                        <h3 style="margin-top: 8px;">${s.message || 'Skill Exchange'}</h3>
+                        <p style="font-size: 14px; color: var(--text-dim);">${partner} • Active Session</p>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn btn-outline" onclick="finalizeSession('${s.room_id}')">End & Rate</button>
+                        <a href="/workspace/${s.room_id}" class="btn btn-primary">Join Studio</a>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderScheduled() {
+            const container = document.getElementById('scheduled-list');
+            if (scheduledSessions.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-dim);">No scheduled matches.</p>';
+                return;
+            }
+            container.innerHTML = scheduledSessions.map(s => `
+                <div class="card">
+                    <div>
+                        <h3 style="margin-top: 8px;">${s.topic || 'Pending Swap'}</h3>
+                        <p style="font-size: 14px; color: var(--text-dim);">${s.partner || 'Network User'} • ${s.time || 'Awaiting Time'}</p>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn btn-danger" onclick="cancelSession('${s.id}')">Cancel</button>
+                        <button class="btn btn-primary" onclick="confirmSession('${s.id}')">Confirm Match</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        function renderHistory() {
+    const container = document.getElementById('history-list');
+    if (history.length === 0) {
+        container.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-dim);">No transactions yet.</td></tr>';
+        return;
+    }
+    
+    container.innerHTML = history.map(h => {
+        const isPositive = h.amount > 0;
+        const color = isPositive ? 'var(--accent)' : 'var(--danger)';
+        const prefix = isPositive ? '+' : '';
+        
+        return `
+            <tr>
+                <td>${h.date || 'Recent'}</td>
+                <td>${h.partner || 'N/A'}</td>
+                <td>${h.topic || 'Skill Swap'}</td>
+                <td><span style="color: var(--accent)">Completed</span></td>
+                <td style="font-weight:700; color: ${color};">${prefix}${h.amount.toFixed(2)}</td>
+            </tr>`;
+    }).join('');
+}
+
+        function triggerSkillifiedToast(title, msg) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `<div class="toast-content"><h4>${title}</h4><p>${msg}</p></div>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 500); }, 4000);
+        }
+
+        // Action Logic (Needs real backend routes to persist)
+async function finalizeSession(roomId) {
+    const rating = prompt("Session Complete. Rate partner performance (1-5):", "5");
+    
+    if (rating) {
+        try {
+            const response = await fetch(`/api/finalize-session/${roomId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rating: rating })
+            });
+
+            if (response.ok) {
+                triggerSkillifiedToast("Exchange Archived", "Rating submitted. Credits have been transferred.");
+                // Refresh data from server to show updated balance
+                setTimeout(() => window.location.reload(), 1500);
+            }
+        } catch (error) {
+            console.error("Transaction failed:", error);
+            triggerSkillifiedToast("System Error", "Could not process credit transfer.");
+        }
+    }
+}
+
+        setInterval(() => {
+            document.getElementById('live-clock').innerText = new Date().toTimeString().split(' ')[0];
+        }, 1000);
+
+        renderAll();
+    </script>
+</body>
+</html>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bounty Board | Studio Intelligence</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #7d2ae8;
+            --secondary: #00d2ff;
+            --bg: #0f172a;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
+            --success: #00ff88;
+            --danger: #ff4757;
+            --ai-glow: #00d2ff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--bg); color: white;
+            overflow-x: hidden; display: flex;
+        }
+
+        .blob {
+            position: absolute; width: 600px; height: 600px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            filter: blur(120px); border-radius: 50%; z-index: -1; opacity: 0.15;
+            animation: move 25s infinite alternate;
+        }
+
+        nav {
+            width: 100px; height: 100vh;
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; align-items: center;
+            padding: 40px 0; gap: 30px; z-index: 10;
+            position: fixed;
+        }
+
+        .nav-icon {
+            width: 54px; height: 54px; border-radius: 16px;
+            background: var(--glass); display: flex; align-items: center;
+            justify-content: center; cursor: pointer; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid var(--border); font-size: 18px; font-weight: 800;
+            text-decoration: none; color: rgba(255, 255, 255, 0.6);
+        }
+
+        .nav-icon:hover, .nav-icon.active { 
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            transform: scale(1.1) translateX(5px); 
+            box-shadow: 0 0 25px rgba(125, 42, 232, 0.5); 
+            color: white;
+        }
+
+        .workspace { flex: 1; margin-left: 100px; padding: 60px; min-height: 100vh; }
+        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 50px; }
+        
+        .section-label {
+            color: var(--secondary); font-weight: 800; font-size: 12px; 
+            letter-spacing: 3px; text-transform: uppercase; margin-bottom: 25px;
+            display: block; border-bottom: 1px solid var(--border); padding-bottom: 10px;
+        }
+
+        .bounty-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            margin-bottom: 60px;
+        }
+
+        .bounty-card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            padding: 30px;
+            border-radius: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bounty-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--secondary);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .ai-card { border: 1px dashed rgba(0, 210, 255, 0.3); }
+        .ai-card:hover { box-shadow: 0 0 30px rgba(0, 210, 255, 0.15); border-style: solid; }
+
+        #bountyOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(30px);
+            display: none; z-index: 9999;
+            align-items: center; justify-content: center;
+        }
+
+        .expanded-content {
+            width: 90%; max-width: 800px;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            padding: 60px;
+            border-radius: 35px;
+            position: relative;
+            animation: zoomIn 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .btn-action {
+            padding: 16px 32px; border-radius: 14px; border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.05); color: white; font-weight: 700;
+            cursor: pointer; transition: 0.4s; text-decoration: none;
+        }
+
+        .btn-accept {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none; box-shadow: 0 10px 30px rgba(125, 42, 232, 0.3);
+        }
+
+        #aiConsole {
+            display: none; background: rgba(0, 0, 0, 0.3);
+            padding: 20px; border-radius: 15px; border-left: 4px solid var(--secondary);
+            margin: 30px 0; font-family: 'Courier New', monospace; font-size: 14px;
+        }
+
+        @keyframes zoomIn {
+            from { opacity: 0; transform: scale(0.9) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes move { from { transform: translate(-10%, -10%); } to { transform: translate(10%, 10%); } }
+    </style>
+</head>
+<body>
+    <div class="blob"></div>
+    
+    <nav>
+        <a href="/dashboard" class="nav-icon" title="Dashboard">DB</a>
+        <a href="/bounties" class="nav-icon active" title="Bounty Board">BN</a>
+        <a href="/my_projects" class="nav-icon" title="My Projects">MP</a>
+        <a href="/logout" class="nav-icon" style="margin-top:auto;">🚪</a>
+    </nav>
+
+    <div class="workspace">
+        <header class="header-flex">
+            <div>
+                <p style="color: var(--secondary); font-weight: 800; font-size: 12px; letter-spacing: 3px; text-transform: uppercase;">Intelligence Marketplace</p>
+                <h1 style="font-size: 40px; font-weight: 800; letter-spacing: -1px;">Bounty Board</h1>
+            </div>
+            <div style="text-align: right;">
+                <p style="opacity: 0.5; font-size: 12px; font-weight: 600;">PORTFOLIO BALANCE</p>
+                <h2 style="color: var(--success);">{{ user.credits }} CREDITS</h2>
+            </div>
+        </header>
+
+        <span class="section-label">🤖 Neural Missions (Instant Credits)</span>
+        <div class="bounty-grid">
+            {% for b in ai_bounties %}
+            <div class="bounty-card ai-card" onclick='openBounty({{ b | tojson | safe }})'>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                    <span style="background: rgba(0, 210, 255, 0.15); color: var(--secondary); padding: 5px 12px; border-radius: 8px; font-size: 10px; font-weight: 800;">AI SYSTEM</span>
+                    <span style="color: var(--success); font-weight: 800;">+{{ b.reward }}c</span>
+                </div>
+                <h2>{{ b.title }}</h2>
+                <p style="opacity: 0.5; font-size: 14px;">{{ b.description[:80] }}...</p>
+                <p style="margin-top: 20px; color: var(--secondary); font-size: 12px; font-weight: 700;">Start Neural Verification →</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <span class="section-label">👤 Human Missions (Community Ops)</span>
+        <div class="bounty-grid">
+            {% for b in human_bounties %}
+            <div class="bounty-card" onclick='openBounty({{ b | tojson | safe }})'>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                    <span style="background: rgba(125, 42, 232, 0.2); color: var(--primary); padding: 5px 12px; border-radius: 8px; font-size: 10px; font-weight: 800;">HUMAN MISSION</span>
+                    <span style="color: var(--success); font-weight: 800;">+{{ b.reward }}c</span>
+                </div>
+                <h2>{{ b.title }}</h2>
+                <p style="opacity: 0.5; font-size: 14px;">{{ b.description[:80] }}...</p>
+                <p style="margin-top: 20px; color: var(--primary); font-size: 12px; font-weight: 700;">Accept Contract →</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div id="bountyOverlay">
+        <div class="expanded-content">
+            <span onclick="closeBounty()" style="position: absolute; top: 40px; right: 40px; cursor: pointer; font-size: 24px; opacity: 0.5;">✕</span>
+            <p id="overType" style="color: var(--secondary); font-weight: 800; font-size: 12px; margin-bottom: 10px;"></p>
+            <h1 id="overTitle" style="margin-bottom: 20px;"></h1>
+            <p id="overDesc" style="line-height: 1.6; opacity: 0.8; margin-bottom: 30px;"></p>
+            
+            <div id="aiConsole">
+                <p id="aiStatus" style="color: var(--secondary);"></p>
+            </div>
+
+            <div style="display: flex; gap: 20px; margin-top: 40px;">
+                <button id="acceptBtn" class="btn-action btn-accept" onclick="verifyMission()">Accept Mission</button>
+                <button class="btn-action" onclick="closeBounty()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let activeBountyId = null;
+
+        function openBounty(b) {
+            activeBountyId = b.id;
+            document.getElementById('overTitle').innerText = b.title;
+            document.getElementById('overDesc').innerText = b.description;
+            document.getElementById('overType').innerText = b.type === 'ai' ? '🤖 NEURAL MISSION' : '👤 HUMAN CONTRACT';
+            document.getElementById('bountyOverlay').style.display = 'flex';
+            
+            document.getElementById('aiConsole').style.display = 'none';
+            document.getElementById('acceptBtn').disabled = false;
+            document.getElementById('acceptBtn').innerText = "Accept Mission";
+        }
+
+        function closeBounty() {
+            document.getElementById('bountyOverlay').style.display = 'none';
+        }
+
+        async function verifyMission() {
+            const btn = document.getElementById('acceptBtn');
+            const status = document.getElementById('aiStatus');
+            const consoleBox = document.getElementById('aiConsole');
+            
+            btn.disabled = true;
+            consoleBox.style.display = 'block';
+            status.innerText = "> INITIALIZING NEURAL UPLINK...";
+
+            const fd = new FormData();
+            fd.append('bounty_id', activeBountyId);
+
+            try {
+                const res = await fetch('/accept_bounty', { method: 'POST', body: fd });
+                const data = await res.json();
+                
+                if (data.status === 'success') {
+                    status.innerText = "> UPLINK SUCCESSFUL. MIGRATING TO WORKSPACE...";
+                    setTimeout(() => { 
+                        window.location.href = "/my_projects"; 
+                    }, 1500);
+                } else {
+                    status.innerText = "> ERROR: " + data.message;
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                status.innerText = "> CONNECTION FAILED.";
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

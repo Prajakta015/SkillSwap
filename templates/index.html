@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Studio | Skill Swap Landing</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #7d2ae8;
+            --secondary: #00d2ff;
+            --bg: #0f172a; /* Matched to Studio Dashboard */
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--bg);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Ambient background blob to match Dashboard */
+        .blob {
+            position: absolute; width: 500px; height: 500px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            filter: blur(120px); border-radius: 50%; z-index: -1; opacity: 0.1;
+            top: -10%; right: -10%;
+        }
+
+        nav {
+            height: 90px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 8%;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+        }
+
+        .logo { font-size: 24px; font-weight: 800; letter-spacing: -1px; }
+        .logo span { color: var(--secondary); }
+
+        .hero {
+            padding: 120px 8% 60px;
+            text-align: center;
+        }
+
+        .hero h1 { 
+            font-size: clamp(40px, 8vw, 72px); 
+            font-weight: 800; 
+            letter-spacing: -3px; 
+            line-height: 1; 
+            margin-bottom: 25px; 
+        }
+
+        .text-gradient {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .magic-search {
+            max-width: 650px;
+            margin: 50px auto;
+            background: var(--glass);
+            padding: 10px;
+            border-radius: 24px;
+            display: flex;
+            border: 1px solid var(--border);
+            transition: 0.3s;
+        }
+
+        .magic-search:focus-within {
+            border-color: var(--secondary);
+            box-shadow: 0 0 30px rgba(0, 210, 255, 0.1);
+        }
+
+        .magic-search input {
+            flex: 1; border: none; background: transparent;
+            padding: 15px 25px; font-size: 18px; color: white; outline: none;
+        }
+
+        .btn-magic {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: white; border: none; padding: 0 30px;
+            border-radius: 18px; font-weight: 700; cursor: pointer;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px; padding: 40px 8%;
+        }
+
+        .tile {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            padding: 35px; border-radius: 28px;
+            text-align: center; transition: 0.3s;
+        }
+
+        .tile:hover {
+            transform: translateY(-10px);
+            border-color: var(--secondary);
+            background: rgba(255,255,255,0.06);
+        }
+
+        #result {
+            max-width: 650px; margin: -20px auto 40px;
+            padding: 20px; border-radius: 20px;
+            background: rgba(0, 210, 255, 0.05);
+            border-left: 4px solid var(--secondary);
+            display: none; text-align: left; line-height: 1.6;
+        }
+
+        .nav-btn {
+            text-decoration: none; font-weight: 700; padding: 12px 25px;
+            border-radius: 15px; transition: 0.3s;
+        }
+        .btn-signin { color: white; }
+        .btn-join { background: white; color: black; }
+        .btn-join:hover { background: var(--secondary); color: white; }
+    </style>
+</head>
+<body>
+    <div class="blob"></div>
+    
+    <nav>
+        <div class="logo">Skill<span>Swap</span>.</div>
+        <div>
+            <a href="/auth_page?mode=login" class="nav-btn btn-signin">Sign in</a>
+            <a href="/auth_page?mode=signup" class="nav-btn btn-join">Join for Free</a>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <p style="color: var(--secondary); font-weight: 700; letter-spacing: 2px; text-transform: uppercase; font-size: 13px; margin-bottom: 20px;">AI-Powered Knowledge Barter</p>
+        <h1>Design your future <br> by <span class="text-gradient">swapping skills.</span></h1>
+        
+        <form class="magic-search" id="matchForm">
+            <input type="text" id="goal" placeholder="I want to learn advanced UI design..." required>
+            <button type="submit" class="btn-magic" id="searchBtn">Magic Match</button>
+        </form>
+
+        <div id="result"></div>
+    </section>
+
+    <div class="grid">
+        <div class="tile"><h3>🎸 Guitar</h3><p style="opacity:0.5">42 Experts</p></div>
+        <div class="tile"><h3>🐍 Python</h3><p style="opacity:0.5">128 Experts</p></div>
+        <div class="tile"><h3>🎨 UI/UX</h3><p style="opacity:0.5">65 Experts</p></div>
+        <div class="tile"><h3>📸 Photo</h3><p style="opacity:0.5">31 Experts</p></div>
+    </div>
+
+    <script>
+    document.getElementById('matchForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const goal = document.getElementById('goal').value;
+        const resDiv = document.getElementById('result');
+        const btn = document.getElementById('searchBtn');
+        
+        resDiv.style.display = "block";
+        resDiv.innerHTML = "<i>✨ Scanning Studio Intelligence for teachers...</i>";
+        btn.disabled = true;
+
+        const fd = new FormData();
+        fd.append('query', goal); 
+
+        try {
+            const res = await fetch('/magic_search', {
+                method: 'POST',
+                body: fd
+            });
+            const data = await res.json();
+            
+            if (data.status === 'success') {
+                const matches = JSON.parse(data.matches);
+                if (matches.length > 0) {
+                    const m = matches[0];
+                    
+                    // 1. Show a teaser of the match
+                    resDiv.innerHTML = `
+                        <strong>✨ Found an Expert: ${m.name}</strong><br>
+                        Expertise: ${m.skill}<br>
+                        <p style="font-size:14px; color: var(--secondary); margin-top:10px;">
+                            Redirecting you to start the swap...
+                        </p>
+                    `;
+
+                    // 2. Wait 2 seconds so they see the result, then redirect
+                    setTimeout(() => {
+                        const message = encodeURIComponent(`We found ${m.name} for you! Sign up to connect.`);
+                        window.location.href = `/auth_page?mode=signup&msg=${message}`;
+                    }, 2000);
+
+                } else {
+                    resDiv.innerText = "✨ No exact match found yet. Try a broader skill like 'Python' or 'Design'!";
+                    btn.disabled = false;
+                }
+            } else {
+                // If search failed because they aren't logged in, that's fine! 
+                // We still want them to sign up.
+                window.location.href = "/auth_page?mode=signup";
+            }
+        } catch (err) {
+            resDiv.innerText = "❌ Connection error. Ensure backend is running.";
+            btn.disabled = false;
+        }
+    };
+</script>
+</body>
+</html>

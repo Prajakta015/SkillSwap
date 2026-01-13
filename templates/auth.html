@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillSwap | Entrance</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+    :root { 
+        --accent: #7d2ae8; 
+        --secondary: #00d2ff; 
+        --bg: #0f172a; 
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body { 
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        background: var(--bg);
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        overflow: hidden;
+    }
+
+    .blob {
+        position: absolute; width: 500px; height: 500px;
+        background: linear-gradient(135deg, var(--accent), var(--secondary));
+        filter: blur(80px); border-radius: 50%; z-index: -1; opacity: 0.3;
+        animation: move 20s infinite alternate;
+    }
+
+    .auth-card {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 40px;
+        border-radius: 32px;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        transition: all 0.3s ease-in-out;
+        z-index: 10;
+    }
+
+    h2 { font-size: 32px; font-weight: 800; margin-bottom: 8px; letter-spacing: -1px; }
+    p { color: #94a3b8; margin-bottom: 32px; font-size: 14px; }
+
+    .input-group { margin-bottom: 16px; position: relative; }
+    
+    .password-wrapper { display: flex; align-items: center; }
+
+    input {
+        width: 100%;
+        padding: 14px 20px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 14px;
+        color: white;
+        font-family: inherit;
+        transition: 0.3s;
+    }
+
+    .password-wrapper input { padding-right: 65px; }
+    input:focus { outline: none; border-color: var(--secondary); background: rgba(255, 255, 255, 0.1); }
+
+    .toggle-password {
+        position: absolute;
+        right: 15px;
+        font-size: 11px;
+        font-weight: 800;
+        color: var(--secondary);
+        cursor: pointer;
+        text-transform: uppercase;
+        user-select: none;
+        letter-spacing: 1px;
+    }
+
+    .btn-primary {
+        width: 100%;
+        padding: 14px;
+        background: white;
+        color: black;
+        border: none;
+        border-radius: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: 0.3s;
+        margin-top: 10px;
+    }
+    
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+
+    .toggle-text { text-align: center; margin-top: 24px; font-size: 13px; color: #94a3b8; }
+    .toggle-text span { color: var(--secondary); cursor: pointer; font-weight: 600; text-decoration: underline; }
+
+    .hidden { display: none !important; }
+
+    /* Modal Animation */
+    #forgot-modal:not(.hidden) .auth-card {
+        animation: scaleUp 0.3s ease-out;
+    }
+
+    @keyframes scaleUp {
+        from { transform: scale(0.9); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes move { from { transform: translate(-10%, -10%); } to { transform: translate(10%, 10%); } }
+    </style>
+</head>
+<body>
+    <div class="blob"></div>
+
+    <div class="auth-card">
+        <div id="login-section">
+            <h2>Welcome back</h2>
+            <p>Enter your details to continue your journey.</p>
+            <form onsubmit="handleAuth(event, 'login')">
+                <div class="input-group">
+                    <input type="email" name="email" placeholder="Email" required>
+                </div>
+                <div class="input-group password-wrapper">
+                    <input type="password" name="password" id="loginPass" placeholder="Password" required>
+                    <span class="toggle-password" onclick="togglePassword('loginPass')">Show</span>
+                </div>
+                <div style="text-align: right; margin-top: -10px; margin-bottom: 20px;">
+                    <span onclick="toggleModal(true)" style="font-size: 12px; color: #94a3b8; cursor: pointer; transition: 0.3s;" onmouseover="this.style.color='var(--secondary)'" onmouseout="this.style.color='#94a3b8'">Forgot Password?</span>
+                </div>
+                <button type="submit" class="btn-primary">Sign In</button>
+            </form>
+            <div class="toggle-text">New here? <span onclick="toggleAuth()">Create an account</span></div>
+        </div>
+
+        <div id="signup-section" class="hidden">
+            <h2>Create account</h2>
+            <p>Join the community of expert learners.</p>
+            <form onsubmit="handleAuth(event, 'register')">
+                <div class="input-group">
+                    <input type="text" name="name" placeholder="Full Name" required>
+                </div>
+                <div class="input-group">
+                    <input type="email" name="email" placeholder="Email" required>
+                </div>
+                <div class="input-group password-wrapper">
+                    <input type="password" name="password" id="signupPass" placeholder="Password" required>
+                    <span class="toggle-password" onclick="togglePassword('signupPass')">Show</span>
+                </div>
+                <div class="input-group">
+                    <input type="text" name="skill" placeholder="What skill can you teach?" required>
+                </div>
+                <button type="submit" class="btn-primary">Get Started</button>
+            </form>
+            <div class="toggle-text">Already have an account? <span onclick="toggleAuth()">Sign In</span></div>
+        </div>
+    </div>
+
+    <div id="forgot-modal" class="hidden" style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+        <div class="auth-card" style="border: 1px solid var(--secondary);">
+            <h2>Reset Access</h2>
+            <p>Enter your email and the AI will verify your identity.</p>
+            <form onsubmit="handleReset(event)">
+                <div class="input-group">
+                    <input type="email" id="resetEmail" placeholder="Account Email" required>
+                </div>
+                <button type="submit" class="btn-primary">Send Reset Link</button>
+                <div class="toggle-text"><span onclick="toggleModal(false)">Back to Login</span></div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // 1. Handle Signup vs Login View
+    const mode = urlParams.get('mode');
+    if (mode === 'signup') showSignup();
+    else showLogin();
+
+    // 2. Handle the Magic Search Welcome Message
+    const msg = urlParams.get('msg');
+    if (msg) {
+        // Create a temporary stylish message box
+        const welcomeDiv = document.createElement('div');
+        welcomeDiv.style.cssText = `
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 210, 255, 0.15); backdrop-filter: blur(10px);
+            border: 1px solid var(--secondary); color: white; padding: 12px 24px;
+            border-radius: 50px; font-size: 14px; font-weight: 600; z-index: 2000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: scaleUp 0.3s ease-out;
+        `;
+        welcomeDiv.innerHTML = `✨ ${msg}`;
+        document.body.appendChild(welcomeDiv);
+        
+        // Remove it after 5 seconds
+        setTimeout(() => welcomeDiv.remove(), 5000);
+    }
+});
+        function showSignup() {
+            document.getElementById('login-section').classList.add('hidden');
+            document.getElementById('signup-section').classList.remove('hidden');
+        }
+
+        function showLogin() {
+            document.getElementById('signup-section').classList.add('hidden');
+            document.getElementById('login-section').classList.remove('hidden');
+        }
+
+        function toggleAuth() {
+            const isLoginHidden = document.getElementById('login-section').classList.contains('hidden');
+            if (isLoginHidden) showLogin();
+            else showSignup();
+            window.history.pushState({}, '', window.location.pathname);
+        }
+
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const toggleBtn = input.nextElementSibling;
+            if (input.type === "password") {
+                input.type = "text";
+                toggleBtn.innerText = "Hide";
+            } else {
+                input.type = "password";
+                toggleBtn.innerText = "Show";
+            }
+        }
+
+        function toggleModal(show) {
+            const modal = document.getElementById('forgot-modal');
+            if (show) modal.classList.remove('hidden');
+            else modal.classList.add('hidden');
+        }
+
+        async function handleReset(event) {
+    event.preventDefault();
+    const btn = event.target.querySelector('button');
+    const email = document.getElementById('resetEmail').value;
+    
+    btn.innerText = "Locating Account...";
+    btn.disabled = true;
+
+    const formData = new FormData();
+    formData.append('email', email);
+
+    try {
+        const response = await fetch('/forgot_password', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            alert(`✨ ${data.message}`);
+            toggleModal(false);
+        } else {
+            alert(data.message);
+        }
+    } catch (e) {
+        alert("Server error. Try again later.");
+    } finally {
+        btn.innerText = "Send Reset Link";
+        btn.disabled = false;
+    }
+}
+
+        async function handleAuth(event, action) {
+            event.preventDefault();
+            
+            const btn = event.target.querySelector('button');
+            const originalText = btn.innerText;
+            btn.innerText = "Processing...";
+            btn.disabled = true;
+
+            const form = event.target;
+            const formData = new FormData(form);
+            formData.append('action', action);
+            
+            // Critical: Capture email value for the redirect link
+            const emailValue = formData.get('email');
+
+            try {
+                const response = await fetch('/auth', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    // Standard Login Success
+                    window.location.href = data.redirect;
+                } 
+                else if (data.status === 'pending_verification') {
+                    // Redirect to verification page with email in URL
+                    alert(data.message || "Verification code sent to your email!");
+                    window.location.href = `/verify_page?email=${encodeURIComponent(emailValue)}`;
+                } 
+                else {
+                    // Handle Errors (already exists, invalid creds, etc.)
+                    alert(data.message || "An error occurred");
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                console.error("Auth Error:", error);
+                alert("Server error. Please check your internet connection.");
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

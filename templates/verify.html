@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillSwap | Verify Email</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --accent: #7d2ae8; --secondary: #00d2ff; --bg: #0f172a; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg); height: 100vh; display: flex;
+            align-items: center; justify-content: center; color: white;
+            overflow: hidden;
+        }
+        .blob {
+            position: absolute; width: 500px; height: 500px;
+            background: linear-gradient(135deg, var(--accent), var(--secondary));
+            filter: blur(80px); border-radius: 50%; z-index: -1; opacity: 0.3;
+            animation: move 20s infinite alternate;
+        }
+        .auth-card {
+            background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1); padding: 40px;
+            border-radius: 32px; width: 100%; max-width: 400px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); text-align: center;
+        }
+        h2 { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+        p { color: #94a3b8; margin-bottom: 24px; font-size: 14px; }
+        .code-input {
+            width: 100%; padding: 14px; background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 14px;
+            color: white; font-size: 24px; text-align: center;
+            letter-spacing: 8px; font-weight: 800; margin-bottom: 20px;
+        }
+        .code-input:focus { outline: none; border-color: var(--secondary); }
+        .btn-primary {
+            width: 100%; padding: 14px; background: white; color: black;
+            border: none; border-radius: 14px; font-weight: 700;
+            cursor: pointer; transition: 0.3s;
+        }
+        .btn-primary:hover { transform: translateY(-2px); }
+        .resend { margin-top: 20px; font-size: 13px; color: #94a3b8; cursor: pointer; }
+        .resend span { color: var(--secondary); text-decoration: underline; }
+        @keyframes move { from { transform: translate(-10%, -10%); } to { transform: translate(10%, 10%); } }
+    </style>
+</head>
+<body>
+    <div class="blob"></div>
+    <div class="auth-card">
+        <h2>Check your inbox</h2>
+        <p>We sent a 6-digit code to <br><b id="displayEmail">{{ email }}</b></p>
+        
+        <form onsubmit="handleVerify(event)">
+            <input type="text" id="otpCode" class="code-input" maxlength="6" placeholder="000000" required autofocus>
+            <button type="submit" class="btn-primary">Verify & Continue</button>
+        </form>
+
+        <div class="resend" id="resendBtn" onclick="resendCode()">Didn't get it? <span>Resend Code</span></div>
+    </div>
+
+    <script>
+        async function resendCode() {
+    const resendBtn = document.getElementById('resendBtn');
+    const urlParams = new URLSearchParams(window.location.search);
+    const email = urlParams.get('email');
+
+    resendBtn.innerHTML = "Sending...";
+    resendBtn.style.pointerEvents = "none"; // Prevent double clicks
+
+    const formData = new FormData();
+    if (email) formData.append('email', email);
+
+    try {
+        const response = await fetch('/resend_otp', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            alert("A new verification code has been sent to your inbox!");
+            resendBtn.innerHTML = "Code Sent! <span>Resend again?</span>";
+        } else {
+            alert(data.message);
+            resendBtn.innerHTML = "Didn't get it? <span>Resend Code</span>";
+        }
+    } catch (e) {
+        alert("Error connecting to server.");
+        resendBtn.innerHTML = "Didn't get it? <span>Resend Code</span>";
+    } finally {
+        resendBtn.style.pointerEvents = "auto";
+    }
+}
+
+        async function handleVerify(event) {
+            event.preventDefault();
+            const code = document.getElementById('otpCode').value;
+            const btn = event.target.querySelector('button');
+            
+            // Get email from URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const email = urlParams.get('email');
+
+            btn.innerText = "Checking...";
+            btn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('code', code);
+            if (email) {
+                formData.append('email', email);
+            }
+
+            try {
+                const response = await fetch('/confirm_email', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    window.location.href = data.redirect;
+                } else {
+                    alert(data.message || "Invalid code. Please try again.");
+                    btn.innerText = "Verify & Continue";
+                    btn.disabled = false;
+                }
+            } catch (e) {
+                alert("Connection error. Is the server running?");
+                btn.disabled = false;
+                btn.innerText = "Verify & Continue";
+            }
+        }
+
+        // Auto-submit when 6 digits are reached
+        document.getElementById('otpCode').addEventListener('input', function() {
+            if (this.value.length === 6) {
+                handleVerify(new Event('submit'));
+            }
+        });
+    </script>
+</body>
+</html>

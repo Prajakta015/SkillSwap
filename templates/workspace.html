@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Studio Intelligence | AI Verified Workspace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050505;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.08);
+            --accent: #3797f0;
+            --accent-glow: rgba(55, 151, 240, 0.3);
+            --text-main: #ffffff;
+            --text-dim: #a0a0a0;
+            --success: #00ff88;
+            --danger: #ff4757;
+        }
+
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background: var(--bg); color: var(--text-main); margin: 0; 
+            display: flex; height: 100vh; overflow: hidden;
+        }
+
+        /* Sidebar */
+        .workspace-sidebar {
+            width: 320px; background: rgba(10, 10, 10, 0.8);
+            border-right: 1px solid var(--border); display: flex;
+            flex-direction: column; padding: 30px 20px;
+        }
+
+        .avatar-main { 
+            width: 64px; height: 64px; border-radius: 18px; 
+            background: linear-gradient(135deg, var(--accent), #8e2de2);
+            display: flex; align-items: center; justify-content: center; 
+            font-weight: 700; font-size: 24px; margin: 0 auto 15px auto;
+            box-shadow: 0 4px 15px var(--accent-glow);
+        }
+
+        .progress-container {
+            margin-top: 20px; background: var(--border); height: 4px; border-radius: 2px; overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%; background: var(--success); width: {{ project.progress or 0 }}%; transition: 0.5s;
+        }
+
+        /* Main Area */
+        .main-collab { flex: 1; display: flex; flex-direction: column; background: #050505; }
+        .header { padding: 20px 30px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+
+        #proctorConsole {
+            background: rgba(0, 0, 0, 0.5); border: 1px solid var(--border);
+            border-left: 4px solid var(--accent); padding: 20px; margin: 20px;
+            font-family: 'Courier New', monospace; font-size: 13px; border-radius: 8px;
+        }
+
+        .chat-area { flex: 1; padding: 30px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        
+        /* Input Panel */
+        .side-panel { width: 400px; background: rgba(15, 15, 15, 0.9); border-left: 1px solid var(--border); padding: 30px; display: flex; flex-direction: column; }
+        
+        textarea { 
+            flex: 1; background: #0a0a0a; border: 1px solid var(--border); 
+            border-radius: 12px; color: var(--success); font-family: 'Fira Code', monospace; 
+            padding: 20px; resize: none; margin-bottom: 20px; outline: none; transition: 0.3s;
+        }
+        textarea:focus { border-color: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
+
+        .btn-finish { 
+            background: linear-gradient(135deg, var(--accent), #8e2de2); 
+            color: white; padding: 16px; border-radius: 12px; border: none; 
+            font-weight: 800; cursor: pointer; transition: 0.3s;
+        }
+        .btn-finish:hover { transform: translateY(-2px); box-shadow: 0 5px 15px var(--accent-glow); }
+        .btn-finish:disabled { opacity: 0.5; filter: grayscale(1); cursor: not-allowed; }
+
+        .bubble { max-width: 80%; padding: 12px 18px; border-radius: 16px; font-size: 14px; margin-bottom: 10px; }
+        .bubble.ai { background: var(--card-bg); border: 1px solid var(--border); color: var(--accent); border-bottom-left-radius: 2px; }
+    </style>
+</head>
+<body>
+
+    <aside class="workspace-sidebar">
+        <div style="margin-bottom: 40px;">
+            <h2 style="font-size: 18px; font-weight: 700; margin:0;">Mission Control</h2>
+            <div style="display: flex; align-items: center; gap: 8px; color: var(--success); font-size: 11px; margin-top:5px;">
+                <span style="height: 6px; width: 6px; background: var(--success); border-radius: 50%; display:inline-block;"></span>
+                NEURAL UPLINK ACTIVE
+            </div>
+        </div>
+
+        <div class="avatar-main">
+            {% if project.type == 'ai' %} 🤖 {% else %} 🎓 {% endif %}
+        </div>
+        
+        <div style="text-align: center; margin-bottom: 30px;">
+            <div style="font-weight: 600;">
+                {% if project.type == 'ai' %} AI Proctor {% else %} Skill Expert {% endif %}
+            </div>
+            <div style="color: var(--text-dim); font-size: 12px;">Verification Authority</div>
+        </div>
+
+        <div style="padding: 15px; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border);">
+            <p style="font-size: 10px; color: var(--text-dim); margin-bottom: 5px; text-transform: uppercase;">Current Objective</p>
+            <p style="font-size: 13px; margin: 0; font-weight: 600;">{{ project.title }}</p>
+            <div class="progress-container">
+                <div class="progress-bar" id="uiProgressBar"></div>
+            </div>
+        </div>
+
+        <div style="margin-top: auto; font-size: 11px; color: var(--text-dim); line-height: 1.6;">
+            <p>⚠️ <b>Protocol:</b> Document your key learnings or project milestones. The Proctor will verify quality before releasing credits.</p>
+        </div>
+    </aside>
+
+    <main class="main-collab">
+        <header class="header">
+            <a href="/my_projects" style="color: var(--text-dim); text-decoration: none; font-size: 13px; display: flex; align-items: center; gap: 5px;">
+                <span>←</span> Disconnect Uplink
+            </a>
+            <div style="font-size: 11px; font-family: monospace; color: var(--text-dim); background: var(--card-bg); padding: 4px 10px; border-radius: 4px;">
+                SESSION_ID: {{ project.id }}
+            </div>
+        </header>
+
+        <div id="proctorConsole">
+            <p id="proctorStatus">[SYSTEM]: Initializing secure workspace... Awaiting submission.</p>
+        </div>
+
+        <div class="chat-area" id="chatBox">
+            <div class="bubble ai">
+                <b>[AI PROCTOR]</b><br>
+                Uplink established. To claim your <b>{{ project.reward }} Credits</b>, provide a summary of your work in the Submission Ledger. I will perform a final verification check once you hit Finalize.
+            </div>
+        </div>
+    </main>
+
+    <section class="side-panel">
+        <h3 style="margin-top: 0; font-size: 14px; display: flex; justify-content: space-between; color: var(--text-dim);">
+            SUBMISSION LEDGER
+            <span style="color: var(--success); font-size: 10px; letter-spacing: 1px;">ENCRYPTED</span>
+        </h3>
+        <textarea id="workNotes" placeholder="// Log your research, code snippets, or session outcomes here..."></textarea>
+        
+        <button id="finishBtn" class="btn-finish" onclick="startAIProctorVerification()">
+            COMPLETE MISSION
+        </button>
+    </section>
+
+    <script>
+        async function startAIProctorVerification() {
+            const notes = document.getElementById('workNotes').value;
+            const btn = document.getElementById('finishBtn');
+            const status = document.getElementById('proctorStatus');
+            const progress = document.getElementById('uiProgressBar');
+
+            if(notes.trim().length < 20) {
+                alert("The AI Proctor requires at least 20 characters of proof to verify the mission.");
+                return;
+            }
+
+            // Phase 1: Analysis
+            btn.disabled = true;
+            btn.innerText = "VERIFYING...";
+            status.style.color = 'var(--accent)';
+            status.innerText = "[AI PROCTOR]: ANALYZING SUBMISSION QUALITY...";
+
+            // Fake some "AI" thinking time
+            await new Promise(r => setTimeout(r, 2000));
+            
+            // Phase 2: Challenge
+            const verifyCode = Math.floor(1000 + Math.random() * 9000);
+            const userInput = prompt(`[AI PROCTOR]: Final Verification Required. To prove human-intelligence alignment, please repeat this safety key: ${verifyCode}`);
+
+            if (userInput != verifyCode) {
+                status.style.color = 'var(--danger)';
+                status.innerText = "[AI PROCTOR]: VERIFICATION FAILED. SESSION REJECTED.";
+                btn.disabled = false;
+                btn.innerText = "RETRY COMPLETION";
+                return;
+            }
+
+            // Phase 3: Finalization
+            status.style.color = 'var(--success)';
+            status.innerText = "[AI PROCTOR]: DATA VALIDATED. TRANSFERRING CREDITS...";
+            progress.style.width = "100%";
+
+            const formData = new FormData();
+            formData.append('project_id', '{{ project.id }}');
+            formData.append('notes', notes);
+
+            try {
+                const res = await fetch('/finalize_mission', { 
+                    method: 'POST', 
+                    body: formData 
+                });
+                const data = await res.json();
+
+                if (data.status === 'success') {
+                    status.innerText = "[AI PROCTOR]: SUCCESS. LEDGER UPDATED. DISCONNECTING...";
+                    setTimeout(() => { window.location.href = "/my_projects"; }, 2000);
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (err) {
+                status.style.color = 'var(--danger)';
+                status.innerText = "[SYSTEM ERROR]: " + err.message;
+                btn.disabled = false;
+                btn.innerText = "RETRY FINALIZATION";
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Start Your Journey | Skill Swap</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #7d2ae8;
+            --secondary: #00d2ff;
+            --glass: rgba(255, 255, 255, 0.8);
+        }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #0f172a;
+            display: flex; align-items: center; justify-content: center;
+            height: 100vh; overflow: hidden;
+        }
+
+        /* Moving Background Magic */
+        .blob {
+            position: absolute; width: 500px; height: 500px;
+            background: linear-gradient(135deg, var(--accent), var(--secondary));
+            filter: blur(80px); border-radius: 50%; z-index: -1;
+            animation: move 20s infinite alternate;
+        }
+
+        @keyframes move {
+            from { transform: translate(-10%, -10%) rotate(0deg); }
+            to { transform: translate(20%, 20%) rotate(360deg); }
+        }
+
+        /* The Card with Canva-style pop */
+        .signup-container {
+            background: var(--glass);
+            backdrop-filter: blur(25px);
+            padding: 50px; border-radius: 40px;
+            width: 420px; text-align: center;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            animation: cardAppear 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes cardAppear {
+            from { opacity: 0; transform: translateY(50px) scale(0.9); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        h2 { font-weight: 800; font-size: 32px; margin-bottom: 10px; color: #1e293b; }
+        p { color: #64748b; margin-bottom: 30px; font-weight: 500; }
+
+        input {
+            width: 100%; padding: 16px; margin-bottom: 15px;
+            border-radius: 16px; border: 2px solid transparent;
+            background: rgba(255,255,255,0.5); outline: none;
+            font-family: inherit; font-size: 15px; transition: 0.3s;
+        }
+
+        input:focus { border-color: var(--accent); background: white; transform: scale(1.02); }
+
+        /* Morphing Button */
+        .btn-submit {
+            width: 100%; padding: 18px; border-radius: 50px;
+            border: none; background: linear-gradient(90deg, var(--accent), var(--secondary));
+            color: white; font-weight: 800; font-size: 16px;
+            cursor: pointer; transition: 0.5s all cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative; overflow: hidden;
+        }
+
+        .btn-submit.loading { width: 60px; color: transparent; border-radius: 50%; }
+        
+        .btn-submit.success { background: #00c853; width: 60px; border-radius: 50%; }
+
+    </style>
+</head>
+<body>
+    <div class="blob"></div>
+    
+    <div class="signup-container">
+        <h2>Join the Club ✨</h2>
+        <p>Teach what you love. Learn what you need.</p>
+        
+        <form id="signupForm">
+            <input type="text" name="name" placeholder="Full Name" required>
+            <input type="email" name="email" placeholder="College Email" required>
+            <input type="password" name="password" placeholder="Create Password" required>
+            <input type="text" name="skill" placeholder="Your Top Skill (e.g. Photoshop)" required>
+            
+            <button type="submit" class="btn-submit" id="btn">
+                <span id="btnText">Get 20 Free Credits</span>
+            </button>
+        </form>
+    </div>
+
+    <script>
+        const form = document.getElementById('signupForm');
+        const btn = document.getElementById('btn');
+        const btnText = document.getElementById('btnText');
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            
+            // Motion: Start Loading
+            btn.classList.add('loading');
+            btnText.style.opacity = '0';
+
+            const formData = new FormData(form);
+            const response = await fetch('/signup', { method: 'POST', body: formData });
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                // Motion: Success State
+                setTimeout(() => {
+                    btn.classList.remove('loading');
+                    btn.classList.add('success');
+                    btnText.innerText = "✓";
+                    btnText.style.opacity = '1';
+                    
+                    // Hand-in-hand: Move to next page after animation
+                    setTimeout(() => window.location.href = result.redirect, 1000);
+                }, 1500);
+            } else {
+                alert(result.message);
+                btn.classList.remove('loading');
+                btnText.style.opacity = '1';
+            }
+        };
+    </script>
+</body>
+</html>
